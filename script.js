@@ -22,52 +22,90 @@ const twitterContainer = document.getElementById("twitter-container");
 const reposContainer = document.getElementById("repos-container");
 const gists = document.getElementById("gists")
 
-
-searchBtn.addEventListener("click", async (e) => {
+const handleSearch = async () => {
     const searchTerm = searchInput.value.trim()
-    searchInput.value = ""
-    const data = await fetchData(searchTerm)
-    renderProfile(data)   
-})
-async function fetchData(username) {
-    const apiUrl = `https://api.github.com/users/${username}`
-    try {
-        const res = await fetch(apiUrl)
-        if (!res.ok) {
-            throw new Error("Failed to fetch data!")
-        }
-        const data = await res.json()
-        return data
 
+    // 1 - INput validation
+    if (!searchTerm) {
+        renderError("Please enter a GitHub Username")
+        return
     }
-    catch (err) {
-        console.log(err)
+
+    // 
+    const data = await fetchData(searchTerm)
+    searchInput.value = ""
+
+    // 2 - Handle API Response
+    if (data) {
+        errorContainer.classList.add("hidden")
+        profileContainer.classList.remove("hidden")
+        renderProfile(data)
+    }
+    else {
+        profileContainer.classList.add("hidden")
+        renderError(`User "${searchTerm}" not found.`)
     }
 }
 
-async function renderProfile(data) {
-    nameElement.textContent = data.name
-    usernameElement.textContent = `@${data.login}`
-    avatar.src = data.avatar_url
-    followers.textContent = data.followers
-    locationElement.textContent = data.location
-    profileLink.href = data.html_url
-    profileContainer.classList.remove("hidden")
+searchBtn.addEventListener("click", handleSearch)
 
-    // 
+// 3 - Allowing Enter key to search
+searchBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        handleSearch()
+    }
+})
+
+async function fetchData(username) {
+    const profileUrl = `https://api.github.com/users/${username}`
+    const repoUrl = `https://api.github.com/users/${username}/repos`
+    try {
+        
+    }
+    catch (err) {
+        console.error("Fetch Error", err)
+        return null
+    }
+}
+
+function renderError(message) {
+    errorContainer.classList.remove("hidden")
+    errorContainer.querySelector(".error-message").textContent = message
+    console.log(errorContainer)
+}
+
+function renderProfile(data) {
+    // 5 - Render profile info
+    avatar.src = data.avatar_url
+    nameElement.textContent = data.name || data.login
+    usernameElement.textContent = `@${data.login}`
+    profileLink.href = data.html_url
+    bioElement.textContent = data.bio || "This user has no bio"
+    joinedDateElement.textContent = new Date(data.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    })
+
+    // 6 - Render Stats
     followers.textContent = data.followers
     following.textContent = data.following
-    repos.textContent = data.public_repos
     gists.textContent = data.public_gists
-    joinedDateElement.textContent = new Date(data.created_at).toLocaleDateString("en-US",{
-        month:"short",
-        day:"numeric",
-        year:"numeric",
-    })
-    companyElement.textContent = data.company?data.company:"No Company"
-    blogElement.href = data.blog?data.blog:"No Blog"
-    blogElement.textContent = data.name.toLowerCase().replaceAll(" ","")
-    twitterElement.href = data.twitter_username?data.twitter_username:"No Twitter"
-    twitterElement.textContent = data.twitter_username?data.twitter_username.toLowerCase().replaceAll(" ",""):"User Not Found"
+    repos.textContent = data.public_repos
+
+    // 7 - Render Optional info
+    locationElement.parentElement.classList.toggle("hidden", !data.location)
+    locationElement.textContent = data.location
+
+    companyContainer.classList.toggle('hidden', !data.company);
+    companyElement.textContent = data.company;
+
+    blogContainer.classList.toggle("hidden",!data.blog)
+    blogElement.href = data.blog ? (data.blog.startsWith('http') ? data.blog : `//${data.blog}`) : '#';
+    blogElement.textContent =  data.blog || '';
+   
+     twitterContainer.classList.toggle('hidden', !data.twitter_username);
+    twitterElement.href = data.twitter_username ? `<https://twitter.com/${data.twitter_username}>` : '#';
+    twitterElement.textContent = data.twitter_username ? `@${data.twitter_username}` : '';
 
 }

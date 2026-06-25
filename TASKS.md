@@ -80,10 +80,10 @@
 - [x] `data.blog` → blog link href (with null check)
 - [x] `data.twitter_username` → twitter text (with null check)
 - [x] Profile container `.hidden` removed on load
-- [ ] `data.bio` → bio text (with null check) — missing!
-- [ ] Duplicate `followers.textContent` on line 52 & 58 — remove line 52
-- [ ] `blogElement.textContent` shows wrong value (shows name, not blog URL)
-- [ ] `twitterElement.href` should be full URL not just username
+- [x] `data.bio` → bio text (with null check) — missing!
+- [x] Duplicate `followers.textContent` on line 52 & 58 — remove line 52
+- [x] `blogElement.textContent` shows wrong value (shows name, not blog URL)
+- [] `twitterElement.href` should be full URL not just username
 
 ### renderRepos(repos)
 - [ ] `renderRepos()` function written
