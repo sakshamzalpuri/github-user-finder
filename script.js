@@ -23,7 +23,7 @@ const reposContainer = document.getElementById("repos-container");
 const gists = document.getElementById("gists")
 
 const handleSearch = async () => {
-    const searchTerm = searchInput.value.trim()
+    const searchTerm = searchInput.value.trim();
 
     // 1 - INput validation
     if (!searchTerm) {
@@ -33,17 +33,17 @@ const handleSearch = async () => {
 
     // 
     const data = await fetchData(searchTerm)
+    console.log(data)
     searchInput.value = ""
 
     // 2 - Handle API Response
     if (data) {
-        errorContainer.classList.add("hidden")
-        profileContainer.classList.remove("hidden")
-        renderProfile(data)
-    }
-    else {
-        profileContainer.classList.add("hidden")
-        renderError(`User "${searchTerm}" not found.`)
+        errorContainer.classList.add("hidden");
+        profileContainer.classList.remove("hidden");
+        renderProfile(data[0]);
+    } else {
+        profileContainer.classList.add("hidden");
+        renderError(`User "${searchTerm}" not found.`);
     }
 }
 
@@ -58,9 +58,23 @@ searchBtn.addEventListener("keydown", (e) => {
 
 async function fetchData(username) {
     const profileUrl = `https://api.github.com/users/${username}`
-    const repoUrl = `https://api.github.com/users/${username}/repos`
+    const reposUrl = `https://api.github.com/users/${username}/repos`
     try {
-        
+        const[profileRes,reposRes] = await Promise.all([
+            fetch(profileUrl),
+            fetch(reposUrl)
+        ])
+
+        if(!profileRes.ok){
+            throw new Error(`User not found: ${profileRes.status}`)
+        }
+
+        const profile = await profileRes.json()
+        const repos = await reposRes.json()
+
+        return[
+            profile,repos
+        ]
     }
     catch (err) {
         console.error("Fetch Error", err)
@@ -71,41 +85,42 @@ async function fetchData(username) {
 function renderError(message) {
     errorContainer.classList.remove("hidden")
     errorContainer.querySelector(".error-message").textContent = message
-    console.log(errorContainer)
 }
 
 function renderProfile(data) {
     // 5 - Render profile info
-    avatar.src = data.avatar_url
-    nameElement.textContent = data.name || data.login
-    usernameElement.textContent = `@${data.login}`
-    profileLink.href = data.html_url
-    bioElement.textContent = data.bio || "This user has no bio"
+    avatar.src = data.avatar_url;
+    nameElement.textContent = data.name || data.login;
+    usernameElement.textContent = `@${data.login}`;
+    profileLink.href = data.html_url;
+    
+    bioElement.classList.toggle("hidden", !data.bio); 
+    bioElement.textContent = data.bio || "This user has no bio.";
+    
     joinedDateElement.textContent = new Date(data.created_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
-    })
+    });
 
     // 6 - Render Stats
-    followers.textContent = data.followers
-    following.textContent = data.following
-    gists.textContent = data.public_gists
-    repos.textContent = data.public_repos
+    followers.textContent = data.followers;
+    following.textContent = data.following;
+    gists.textContent = data.public_gists;
+    repos.textContent = data.public_repos;
 
     // 7 - Render Optional info
-    locationElement.parentElement.classList.toggle("hidden", !data.location)
-    locationElement.textContent = data.location
+    locationElement.parentElement.classList.toggle("hidden", !data.location);
+    locationElement.textContent = data.location;
 
     companyContainer.classList.toggle('hidden', !data.company);
     companyElement.textContent = data.company;
 
-    blogContainer.classList.toggle("hidden",!data.blog)
+    blogContainer.classList.toggle("hidden", !data.blog);
     blogElement.href = data.blog ? (data.blog.startsWith('http') ? data.blog : `//${data.blog}`) : '#';
-    blogElement.textContent =  data.blog || '';
-   
-     twitterContainer.classList.toggle('hidden', !data.twitter_username);
-    twitterElement.href = data.twitter_username ? `<https://twitter.com/${data.twitter_username}>` : '#';
-    twitterElement.textContent = data.twitter_username ? `@${data.twitter_username}` : '';
+    blogElement.textContent = data.blog || '';
 
+    twitterContainer.classList.toggle('hidden', !data.twitter_username);
+    twitterElement.href = data.twitter_username ? `https://twitter.com/${data.twitter_username}` : '#'; // Corrected URL format
+    twitterElement.textContent = data.twitter_username ? `@${data.twitter_username}` : '';
 }
