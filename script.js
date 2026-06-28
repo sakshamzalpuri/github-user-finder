@@ -50,7 +50,7 @@ const handleSearch = async () => {
 searchBtn.addEventListener("click", handleSearch)
 
 // 3 - Allowing Enter key to search
-searchBtn.addEventListener("keydown", (e) => {
+searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
         handleSearch()
     }
@@ -60,23 +60,20 @@ async function fetchData(username) {
     const profileUrl = `https://api.github.com/users/${username}`
     const reposUrl = `https://api.github.com/users/${username}/repos`
     try {
-        const[profileRes,reposRes] = await Promise.all([
+        const [profileRes, repoRes] = await Promise.all([
             fetch(profileUrl),
             fetch(reposUrl)
         ])
 
-        if(!profileRes.ok){
+        if (!profileRes) {
             throw new Error(`User not found: ${profileRes.status}`)
         }
-
         const profile = await profileRes.json()
-        const repos = await reposRes.json()
-
-        return[
-            profile,repos
-        ]
-    }
-    catch (err) {
+        const repoRes = await repoRes.json()
+        return (
+            profile, repoRes
+        )
+    } catch (err) {
         console.error("Fetch Error", err)
         return null
     }
@@ -93,10 +90,10 @@ function renderProfile(data) {
     nameElement.textContent = data.name || data.login;
     usernameElement.textContent = `@${data.login}`;
     profileLink.href = data.html_url;
-    
-    bioElement.classList.toggle("hidden", !data.bio); 
+
+    bioElement.classList.toggle("hidden", !data.bio);
     bioElement.textContent = data.bio || "This user has no bio.";
-    
+
     joinedDateElement.textContent = new Date(data.created_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
